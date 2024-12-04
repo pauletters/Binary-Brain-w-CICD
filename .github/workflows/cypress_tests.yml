@@ -45,19 +45,11 @@ jobs:
           MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
 
       - name: Run cypress component tests
-        run: npm run test-component | tee cypress-output.txt
-          echo "::set-output name=summary::$(cat cypress-output.txt)"
-
-      - name: Create Test Summary
-        if: always()
-        run: |
-          echo "# Cypress Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "## Component Tests" >> $GITHUB_STEP_SUMMARY
-          echo "| Result | Passed ✅ | Failed ❌ | Pending 🕐 | Skipped ⏭️ | Duration ⏱️ |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-----------|-----------|-------------|-------------|-------------|" >> $GITHUB_STEP_SUMMARY
-
-          PASSED=$(grep -o "passing" cypress-output.txt | wc -l)
-          FAILED=$(grep -o "failing" cypress-output.txt | wc -l)
-          DURATION=$(grep -o "[0-9.]*ms" cypress-output.txt | head -n 1)
-          
-          echo "| Passing ✅ | $PASSED | $FAILED | 0 | 0 | $DURATION |" >> $GITHUB_STEP_SUMMARY
+        uses: cypress-io/github-action@v6
+        with:
+          component: true
+          browser: electron
+          record: false
+          config-file: cypress.config.ts
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
