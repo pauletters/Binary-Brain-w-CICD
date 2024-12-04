@@ -34,7 +34,8 @@ jobs:
           MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
 
       - name: Seed database
-        run: npm run seed
+        run: echo "Starting database seed..."
+            timeout 30s npm run seed || (echo "Seed process timed out" && exit 1)
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
         
