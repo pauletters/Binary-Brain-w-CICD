@@ -1,0 +1,55 @@
+name: Cypress Tests
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  test:
+    name: Run Cypress Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 21.x
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the app
+        run: npm run build
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
+
+      - name: Seed database
+        run: echo "Starting database seed..."
+            timeout 30s npm run seed || (echo "Seed process timed out" && exit 1)
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
+        
+      - name: Start the app
+        run: npm run start & sleep 5
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
+
+      - name: Run cypress component tests
+        uses: cypress-io/github-action@v6
+        with:
+          component: true
+          browser: electron
+          record: false
+          config-file: cypress.config.ts
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz

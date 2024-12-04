@@ -5,23 +5,55 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFile } from 'fs/promises';
 
-// Get the directory path of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+console.log("Starting seed process...");
 
-// Go up to src directory and then into seeds
-const jsonPath = join(dirname(dirname(__dirname)), 'src', 'seeds', 'pythonQuestions.json');
+const runSeed = async () => {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const jsonPath = join(dirname(dirname(__dirname)), 'src', 'seeds', 'pythonQuestions.json');
 
-// Read and parse the JSON file
-const pythonQuestions = JSON.parse(
-  await readFile(jsonPath, 'utf-8')
-);
+    console.log("Reading JSON file from:", jsonPath);
+    
+    const pythonQuestions = JSON.parse(
+      await readFile(jsonPath, 'utf-8')
+    );
 
-db.once('open', async () => {
-  await cleanDB('Question', 'questions');
+    console.log("Successfully parsed JSON data");
 
-  await Question.insertMany(pythonQuestions);
+    // Handle database connection
+    db.on('error', (error) => {
+      console.error('MongoDB connection error:', error);
+      process.exit(1);
+    });
 
-  console.log('Questions seeded!');
-  process.exit(0);
-});
+    // Use a Promise to handle the database operations
+    await new Promise<void>((resolve, reject) => {
+      db.once('open', async () => {
+        try {
+          console.log("MongoDB connection established");
+          console.log("Cleaning database...");
+          await cleanDB('Question', 'questions');
+          console.log("Database cleaned");
+
+          console.log("Inserting questions...");
+          await Question.insertMany(pythonQuestions);
+          console.log('Questions seeded successfully!');
+          
+          await db.close();
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    process.exit(0);
+  } catch (error) {
+    console.error('Error in seed file:', error);
+    process.exit(1);
+  }
+};
+
+// Run the seed function
+runSeed();
