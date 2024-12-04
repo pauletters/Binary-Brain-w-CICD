@@ -1,13 +1,29 @@
 import models from '../models/index.js';
 import db from '../config/connection.js';
+import { Model, Connection } from 'mongoose';
+import { IQuestion } from '../models/Question.js';
+import { Db } from 'mongodb';
 
-export default async (modelName: "Question", collectionName: string) => {
+type DatabaseModel = Model<IQuestion> & {
+  db: Connection & {
+    db: Db;  
+  };
+};
+
+export default async (modelName: 'Question', collectionName: string) => {
   try {
-    let modelExists = await models[modelName].db.db.listCollections({
-      name: collectionName
-    }).toArray()
+    const model = models[modelName] as DatabaseModel;
+   
+    if (!model?.db?.db) {
+      throw new Error(`Database connection not initialized for model ${modelName}`);
+    }
 
-    if (modelExists.length) {
+    // Now TypeScript knows we have a valid database connection
+    const collections = await model.db.db.listCollections({
+      name: collectionName
+    }).toArray();
+
+    if (collections.length) {
       await db.dropCollection(collectionName);
     }
   } catch (err) {

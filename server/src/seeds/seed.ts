@@ -2,7 +2,10 @@ import db from "../config/connection.js";
 import Question from "../models/Question.js";
 import cleanDB from "./cleanDb.js";
 
-import pythonQuestions from './pythonQuestions.json' assert { type: "json" };
+import { readFile } from 'fs/promises';
+const pythonQuestions = JSON.parse(
+  (await readFile(new URL('./pythonQuestions.json', import.meta.url))).toString()
+);
 
 db.once('open', async () => {
   await cleanDB('Question', 'questions');
