@@ -10,6 +10,12 @@ jobs:
     name: Run Cypress Tests
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,6 +28,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run cypress tests
+      - name: Build the app
+        run: npm run build & npm run seed
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
+        
+      - name: Start the app
+        run: npm run start & sleep 5
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/techquiz
+
+      - name: Run cypress component tests
+        run: npm run test-component
+
+      - name: Run cypress e2e tests
         run: npm run test
 
